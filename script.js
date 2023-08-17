@@ -395,7 +395,7 @@ whereAmI(52.508, 13.381);
 // promises work in a slightly different way -> callbacks of promises have their own queue called mictrotasks queue (has prioerity over callback queue -> similar to callback queue) -> event loop after every event loop tick (after moving the callback from queue to call stack) will run EVERY promise callback (also called MICROTASKS) in the microtasks queue before continuing callback queue execution
 // if a microtask adds a new microtask, then that new microtask will be executed first - meaning microtasks can starve the callback queue (usually never a problem but that could happen)
 // if you had a click event the callback would be in web api environment and then one fired, it would be moved to callback queue
-*/
+
 
 // THE EVENT LOOP IN PRACTICE
 console.log('Test start');
@@ -409,3 +409,20 @@ Promise.resolve('Resolved promise 2').then(res => {
 console.log('Test end');
 // any code that is synchornous (not in a callback), will execute first so the console logs will execute first. Promise and timer finish at the same time - since promise callbacks (microtasks) have priority (microtasks queue has priority) so the promise callback will run first instead of the timer.
 // timer might run a little bit later depending on how long it takes for the promise to run - this means u can't do high precision things with javascrpt timers since these timers aren't really accurate hwne doing promises things.
+*/
+
+// Building a Simple Promise
+const lotteryPromise = new Promise(function (resolve, reject) {
+  // executor function auto executed as the promise constructor is made. Get 2 params: resolve and reject (these are functions)
+  // this should produce a result since this handles the async stuff when we get the promise
+  if (Math.random() >= 0.5) {
+    resolve(); // in this ase we win the lottery so in order to set the promise as fulfilled/resolved, we use the resolved function.
+    // pass the fulfilled value of the promise in here (available in the then method as the param) and then handle the promise with the then method.
+  } else {
+    // mark promise as rejected
+    reject('You lost your money 💩');
+  }
+}); // make a new promise with the promise constructor (they have constructors so they are just objects in JS). Param1: Takes an executor function.
+// REMEMBER THE 2 states of promises: fulfilled or rejected!
+lotteryPromise.then(res => console.log(res)).catch(err => console.log(err)); // doing then and catch on the promise (the lotteryPromise stuff in the function is the promise we are making like the promise we get back from fetching) and then we are handling the stuff here.
+// new stuff
