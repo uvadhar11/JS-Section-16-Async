@@ -459,7 +459,6 @@ wait(2)
 // remember this way to immediately resolve (fulfill)/reject a promise
 Promise.resolve('abc').then(x => console.log(x)); //
 Promise.reject(new Error('Problem!')).catch(x => console.error(x)); // the value of the x will be the error named Promise. Catching the error that we did immediately.
-*/
 
 // PROMISIFYING THE GEOLOCATION API
 // navigator.geolocation.getCurrentPosition(
@@ -470,9 +469,133 @@ Promise.reject(new Error('Problem!')).catch(x => console.error(x)); // the value
 
 const getPosition = function () {
   return new Promise(function (resolve, reject) {
-    navigator.geolocation.getCurrentPosition(
-      position => resolve(position), // set the position as the fulfilled/resolved value of the promise
-      err => reject(err)
-    ); // get current position, 2 callbacks: success, error. The first callback gets the position as an argument.  the second gets the error
+    // navigator.geolocation.getCurrentPosition(
+    //   position => resolve(position), // set the position as the fulfilled/resolved value of the promise
+    //   err => reject(err)
+    // ); // get current position, 2 callbacks: success, error. The first callback gets the position as an argument.  the second gets the error
+    // ths stuff above happens automatically with this:
+    navigator.geolocation.getCurrentPosition(resolve, reject);
   });
+};
+getPosition().then(pos => console.log(pos)); // when the promise was successful, the resolve function was auto called which returned the position value as the fulfilled value of the promise
+
+const whereAmI = function () {
+  // using the geolocation of our device to get the coords
+  getPosition()
+    .then(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords; // setting the value of the properties into new variables
+
+      // get the country stuff
+      return fetch(
+        `https://geocode.xyz/${lat},${lng}?geoit=json&auth=393992887803963242397x69037`
+      );
+    })
+    .then(response => {
+      console.log(response);
+      // if we get a 403 error then there was a problem with the request so throw the error
+      // response.status = 403; // remember you can't set the values of promises or you will get an error
+      // if (response.status === 403)
+      //   throw new Error('Error connecting to the API');
+      // this is much better since its checking if any issue with the response (in that case ok would be false) instead of just checking one scenario which is the code is 403
+      if (!response.ok)
+        throw new Error(`Problem with geocoding ${response.status}`);
+      // convert to json
+      return response.json();
+    })
+    .then(data => {
+      // amking the parameter called data now since this is the data from the json conversion not the fetch response anymore
+      console.log(data);
+      if (data?.error?.code === '006') throw new Error('Rate Limit Exceeded');
+      // print the message
+      console.log(`You are in ${data.city}, ${data.country}`);
+
+      // get country data from countries api - return the fetch so we don't have callback hell (then inside of a then) and since the then takes the returned promise, if we return this then we are good (and fetch returns a promise)
+      return fetch(`https://restcountries.com/v2/name/${data.country}`);
+    })
+    .then(response => {
+      // if the response isn't ok then throw an error
+      if (!response.ok) throw new Error(`Country not found ${response.status}`);
+
+      // convert response to json
+      return response.json();
+    })
+    .then(data => {
+      // render the country
+      renderCountry(data[0]);
+    })
+    .catch(error => {
+      // console.log(error);
+      // console.log(error.message);
+      console.log(`💥${error.message}`);
+    });
+};
+
+// setting it up with the event handler
+btn.addEventListener('click', whereAmI);
+
+
+// CODING CHALLENGE #2
+let currentImage;
+const imgContainer = document.querySelector('.images');
+
+const createImage = imagePath => {
+  // this creation of the promise is like fetch (getting the data from the api). then we consume the promise with then later
+  return new Promise(function (resolve, reject) {
+    const img = document.createElement('img');
+    img.src = imagePath;
+
+    // wait for it to load
+    img.addEventListener('load', function () {
+      imgContainer.append(img); // adds the image to the image container
+      resolve(img); // mark it as successful
+    });
+
+    // in the case of errors
+    img.addEventListener('error', function () {
+      reject(new Error('Image not found'));
+    });
+  });
+};
+
+// wait function
+const wait = seconds => {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, 1000 * seconds);
+  });
+};
+
+createImage('img/img-1.jpg')
+  .then(img => {
+    // we get the img element as the resolved value of the promise
+    console.log('Image 1 loaded');
+    // store current image
+    currentImage = img;
+    // pause execution for 2 seconds - returns a promise so we are just using a then handler
+    return wait(2);
+
+    // hide current image - this should work even w/o a then
+    // img.display = 'none';
+  })
+  .then(() => {
+    // the wait function doesn't return any resolved value
+    currentImage.style.display = 'none';
+    return createImage('img/img-2.jpg')
+      .then(img => {
+        currentImage = img;
+        console.log('Image 2 loaded');
+        return wait(2);
+      })
+      .then(() => {
+        currentImage.style.display = 'None';
+      });
+  })
+  .catch(err => console.error(err.message));
+*/
+
+// CONSUMING PROMISES WITH ASYNC/AWAIT
+// theres a better way to consume promises and that is with async/await
+const whereAmI = async function (country) {
+  // this function is an async function meaning it will run in the background and it will return a promise automatically (more on this in the next video)
+  // we can have 1 or more await statements in these async functions
+  await fetch(`https://restcountries.com/v2/name/${country}`); // stops code execution IN THE FUNCTION until the data has been fetched or the await thing is done. This doesn't stop execution because this is stopping execition in the async function which is running in the background - not in the main execution.
 };
