@@ -409,20 +409,70 @@ Promise.resolve('Resolved promise 2').then(res => {
 console.log('Test end');
 // any code that is synchornous (not in a callback), will execute first so the console logs will execute first. Promise and timer finish at the same time - since promise callbacks (microtasks) have priority (microtasks queue has priority) so the promise callback will run first instead of the timer.
 // timer might run a little bit later depending on how long it takes for the promise to run - this means u can't do high precision things with javascrpt timers since these timers aren't really accurate hwne doing promises things.
-*/
+
 
 // Building a Simple Promise
 const lotteryPromise = new Promise(function (resolve, reject) {
-  // executor function auto executed as the promise constructor is made. Get 2 params: resolve and reject (these are functions)
-  // this should produce a result since this handles the async stuff when we get the promise
-  if (Math.random() >= 0.5) {
-    resolve(); // in this ase we win the lottery so in order to set the promise as fulfilled/resolved, we use the resolved function.
-    // pass the fulfilled value of the promise in here (available in the then method as the param) and then handle the promise with the then method.
-  } else {
-    // mark promise as rejected
-    reject('You lost your money 💩');
-  }
+  console.log('Lottery draw is happening');
+  setTimeout(function () {
+    // made some async behavior with this timer
+    // executor function auto executed as the promise constructor is made. Get 2 params: resolve and reject (these are functions)
+    // this should produce a result since this handles the async stuff when we get the promise
+    if (Math.random() >= 0.5) {
+      resolve('You WIN 💰'); // in this ase we win the lottery so in order to set the promise as fulfilled/resolved, we use the resolved function.
+      // pass the fulfilled value of the promise in here (available in the then method as the param) and then handle the promise with the then method.
+    } else {
+      // mark promise as rejected
+      reject(new Error('You lost your money 💩')); // we can also make an erro be the rejected value of the promise
+    }
+  }, 2000);
 }); // make a new promise with the promise constructor (they have constructors so they are just objects in JS). Param1: Takes an executor function.
 // REMEMBER THE 2 states of promises: fulfilled or rejected!
 lotteryPromise.then(res => console.log(res)).catch(err => console.log(err)); // doing then and catch on the promise (the lotteryPromise stuff in the function is the promise we are making like the promise we get back from fetching) and then we are handling the stuff here.
-// new stuff
+
+// Promisifying the set timeout function
+const wait = function (seconds) {
+  // fetch function returns a promise which is what we are doing here as well. We are promisifying the set timeout function.
+  return new Promise(function (resolve) {
+    // we don't need the reject function because it is impossible for the timer to fail. This function runs when the promise is resolved. Resolve is a function to set the resolved value.
+    setTimeout(resolve, seconds * 1000); // just passing the resolve function in the set timeout function - we don't really need anything for the set timeout function so we are just passing the resolve function since the intent is just for it to wait.
+  });
+};
+
+// consuming the promise
+wait(2)
+  .then(() => {
+    console.log('I waited for 2 seconds.');
+    return wait(1); // just if we want chaining and stuff
+  })
+  .then(() => {
+    console.log('3 seconds passed.');
+    return wait(1); // just if we want chaining and stuff
+  })
+  .then(() => {
+    console.log('4 seconds passed.');
+    return wait(1); // just if we want chaining and stuff
+  })
+  .then(() => console.log('I waited for 1 second.')); // another 1 second waiting.
+// this is SO much better as opposed to the callback hell
+
+// remember this way to immediately resolve (fulfill)/reject a promise
+Promise.resolve('abc').then(x => console.log(x)); //
+Promise.reject(new Error('Problem!')).catch(x => console.error(x)); // the value of the x will be the error named Promise. Catching the error that we did immediately.
+*/
+
+// PROMISIFYING THE GEOLOCATION API
+// navigator.geolocation.getCurrentPosition(
+//   position => console.log(position),
+//   err => console.error(err)
+// ); // get current position, 2 callbacks: success, error. The first callback gets the position as an argument.  the second gets the error
+// console.log('Getting position'); // logged first since the other function sent its stuff to the Web API environment in the browser
+
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(position), // set the position as the fulfilled/resolved value of the promise
+      err => reject(err)
+    ); // get current position, 2 callbacks: success, error. The first callback gets the position as an argument.  the second gets the error
+  });
+};
