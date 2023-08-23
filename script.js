@@ -593,9 +593,41 @@ createImage('img/img-1.jpg')
 */
 
 // CONSUMING PROMISES WITH ASYNC/AWAIT
-// theres a better way to consume promises and that is with async/await
-const whereAmI = async function (country) {
-  // this function is an async function meaning it will run in the background and it will return a promise automatically (more on this in the next video)
-  // we can have 1 or more await statements in these async functions
-  await fetch(`https://restcountries.com/v2/name/${country}`); // stops code execution IN THE FUNCTION until the data has been fetched or the await thing is done. This doesn't stop execution because this is stopping execition in the async function which is running in the background - not in the main execution.
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    // navigator.geolocation.getCurrentPosition(
+    //   position => resolve(position), // set the position as the fulfilled/resolved value of the promise
+    //   err => reject(err)
+    // ); // get current position, 2 callbacks: success, error. The first callback gets the position as an argument.  the second gets the error
+    // ths stuff above happens automatically with this:
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
 };
+// theres a better way to consume promises and that is with async/await
+const whereAmI = async function () {
+  // this function is an async function meaning it will run in the background and it will return a promise automatically (more on this in the next video)
+  const pos = await getPosition();
+  const { latitude: lat, longitude: lng } = pos.coords;
+
+  // reverse geocoding
+  const resGeo = await fetch(
+    `https://geocode.xyz/${lat},${lng}?geoit=json&auth=393992887803963242397x69037`
+  );
+  const dataGeo = await resGeo.json();
+  console.log(dataGeo);
+
+  // we can have 1 or more await statements in these async functions
+  const res = await fetch(
+    `https://restcountries.com/v2/name/${dataGeo.country}`
+  ); // stops code execution IN THE FUNCTION until the data has been fetched or the await thing is done. This doesn't stop execution because this is stopping execition in the async function which is running in the background - not in the main execution.
+  console.log(res);
+  // the async/await is simply syntatic sugar over the then handlers - its essentially the same as doing it the "old" way with returning promises and with then handlers.
+  // the old way: fetch(`https://restcountries.com/v2/name/${country}`).then(res => console.log(res));
+
+  const data = await res.json(); // converting it into json and storing it into a variable (previously we had to use a then handler)
+  console.log(data);
+  renderCountry(data[0]);
+};
+whereAmI('portugal'); // this will print after the first console.log prints because this is async and runs in the background
+console.log('first'); // this will print first since its the first sync
+// async and await is actually used with the then method a lot sometimes too. We need to have error handling here since the errors will basically break our code.
