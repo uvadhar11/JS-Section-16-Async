@@ -606,28 +606,54 @@ const getPosition = function () {
 // theres a better way to consume promises and that is with async/await
 const whereAmI = async function () {
   // this function is an async function meaning it will run in the background and it will return a promise automatically (more on this in the next video)
-  const pos = await getPosition();
-  const { latitude: lat, longitude: lng } = pos.coords;
+  try {
+    // if error in here then handle it in catch
+    const pos = await getPosition();
+    const { latitude: lat, longitude: lng } = pos.coords; // dont need to throw an error manually here because if the property doesn't exist here then it will throw an error automatically and go to the catch block
 
-  // reverse geocoding
-  const resGeo = await fetch(
-    `https://geocode.xyz/${lat},${lng}?geoit=json&auth=393992887803963242397x69037`
-  );
-  const dataGeo = await resGeo.json();
-  console.log(dataGeo);
+    // reverse geocoding
+    const resGeo = await fetch(
+      `https://geocode.xyz/${lat},${lng}?geoit=json&auth=393992887803963242397x69037`
+    );
+    if (!resGeo.ok) throw new Error('Problem getting location'); // fetch only throws an error if user doesn't have network, so in the other cases (doesn't get data) then we need to throw an error manually and automatically jump to the catch block
 
-  // we can have 1 or more await statements in these async functions
-  const res = await fetch(
-    `https://restcountries.com/v2/name/${dataGeo.country}`
-  ); // stops code execution IN THE FUNCTION until the data has been fetched or the await thing is done. This doesn't stop execution because this is stopping execition in the async function which is running in the background - not in the main execution.
-  console.log(res);
-  // the async/await is simply syntatic sugar over the then handlers - its essentially the same as doing it the "old" way with returning promises and with then handlers.
-  // the old way: fetch(`https://restcountries.com/v2/name/${country}`).then(res => console.log(res));
+    const dataGeo = await resGeo.json();
+    console.log(dataGeo);
 
-  const data = await res.json(); // converting it into json and storing it into a variable (previously we had to use a then handler)
-  console.log(data);
-  renderCountry(data[0]);
+    // we can have 1 or more await statements in these async functions
+    const res = await fetch(
+      `https://restcountries.com/v2/name/${dataGeo.country}`
+    ); // stops code execution IN THE FUNCTION until the data has been fetched or the await thing is done. This doesn't stop execution because this is stopping execition in the async function which is running in the background - not in the main execution.
+    console.log(res);
+    // the async/await is simply syntatic sugar over the then handlers - its essentially the same as doing it the "old" way with returning promises and with then handlers.
+    // the old way: fetch(`https://restcountries.com/v2/name/${country}`).then(res => console.log(res));
+    if (!res.ok) throw new Error('Problem getting country'); // check if error in the response for the country (stored in the variable called res NOT resGeo since that's for the geocoding)
+
+    const data = await res.json(); // converting it into json and storing it into a variable (previously we had to use a then handler)
+    console.log(data);
+    renderCountry(data[0]);
+  } catch (err) {
+    // anytime an error is found in the try block, whether that is manually or automatically, then the catch block will run
+    console.error(`${err}💥`);
+    renderError(`Something went wrong 💥 ${err.message}`);
+  }
 };
+console.log('1: Will get location and country');
 whereAmI('portugal'); // this will print after the first console.log prints because this is async and runs in the background
+console.log('2: Finished getting location'); // this will print after the first console.log prints because this is async and runs in the background so the above function won't print before this
+
 console.log('first'); // this will print first since its the first sync
 // async and await is actually used with the then method a lot sometimes too. We need to have error handling here since the errors will basically break our code.
+
+// Error Handling with Try Catch
+// we can put all our code in a try except block to catch any errors that occur in the try block
+// try {
+//   let y = 1;
+//   const x = 2;
+//   x = 3; // this will throw an error since we can't change the value of a const
+// } catch (err) {
+//   // we get the error object as the param of the catch block. We catch the error and then we can handle it accordinglly
+//   alert(err.message);
+// }
+
+// RETURNING VALUES FROM ASYNC FUNCTIONS
