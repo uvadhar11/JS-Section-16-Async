@@ -632,6 +632,9 @@ const whereAmI = async function () {
     const data = await res.json(); // converting it into json and storing it into a variable (previously we had to use a then handler)
     console.log(data);
     renderCountry(data[0]);
+
+    // testing reutrn
+    return `You are in ${dataGeo.city}, ${dataGeo.country}`;
   } catch (err) {
     // anytime an error is found in the try block, whether that is manually or automatically, then the catch block will run
     console.error(`${err}💥`);
@@ -639,9 +642,10 @@ const whereAmI = async function () {
   }
 };
 console.log('1: Will get location and country');
-whereAmI('portugal'); // this will print after the first console.log prints because this is async and runs in the background
+const city = whereAmI(); // this will print after the first console.log prints because this is async and runs in the background
+console.log(city); // this will print a PENDING promise since this is proof an async function always returns a promise. Since the function is async, JS returns a pending promise since it doesn't know what the value will be yet.
 console.log('2: Finished getting location'); // this will print after the first console.log prints because this is async and runs in the background so the above function won't print before this
-
+whereAmI().then(city => console.log(city)); // this will only print only once the promise comes because we have a then handler
 console.log('first'); // this will print first since its the first sync
 // async and await is actually used with the then method a lot sometimes too. We need to have error handling here since the errors will basically break our code.
 
