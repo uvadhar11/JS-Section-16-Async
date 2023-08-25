@@ -593,7 +593,8 @@ createImage('img/img-1.jpg')
 */
 
 // CONSUMING PROMISES WITH ASYNC/AWAIT
-const getPosition = function () {
+const x = 4;
+let getPosition = function () {
   return new Promise(function (resolve, reject) {
     // navigator.geolocation.getCurrentPosition(
     //   position => resolve(position), // set the position as the fulfilled/resolved value of the promise
@@ -603,6 +604,7 @@ const getPosition = function () {
     navigator.geolocation.getCurrentPosition(resolve, reject);
   });
 };
+getPosition = 4; // this will throw an error since we can't change the value of a const
 // theres a better way to consume promises and that is with async/await
 const whereAmI = async function () {
   // this function is an async function meaning it will run in the background and it will return a promise automatically (more on this in the next video)
@@ -640,12 +642,17 @@ const whereAmI = async function () {
     console.error(`${err}💥`);
     renderError(`Something went wrong 💥 ${err.message}`);
   }
+
+  // Reject the promise returned from the async function
+  throw err;
 };
 console.log('1: Will get location and country');
 const city = whereAmI(); // this will print after the first console.log prints because this is async and runs in the background
 console.log(city); // this will print a PENDING promise since this is proof an async function always returns a promise. Since the function is async, JS returns a pending promise since it doesn't know what the value will be yet.
 console.log('2: Finished getting location'); // this will print after the first console.log prints because this is async and runs in the background so the above function won't print before this
-whereAmI().then(city => console.log(city)); // this will only print only once the promise comes because we have a then handler
+whereAmI()
+  .then(city => console.log(city))
+  .catch(err => console.log(`2: ${err.message}💥`)); // this will only print only once the promise comes because we have a then handler. The catch handler will only run if the promise returned from the whereAmI is rejected (no network) or an error is thrown.
 console.log('first'); // this will print first since its the first sync
 // async and await is actually used with the then method a lot sometimes too. We need to have error handling here since the errors will basically break our code.
 
