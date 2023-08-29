@@ -830,20 +830,73 @@ const wait = seconds => {
 //   })
 //   .catch(err => console.error(err.message));
 
-const loadNPause = async function () {
+// const loadNPause = async function () {
+//   try {
+//     let img = await createImage('img/img-1.jpg'); // don't need current image anymore because we aren't doing this in different then handlers so we don't need a global variable for this since its all in one function.
+//     console.log('Image 1 loaded!');
+//     await wait(2);
+//     img.style.display = 'none';
+//     await createImage('img/img-2.jpg');
+//     console.log('Image 2 loaded');
+//     await wait(2);
+//     img.style.display = 'none';
+//   } catch (err) {
+//     // we can actually use catch without using the error argument
+//     console.error(err);
+//   }
+// };
+
+// Part 2
+// const loadAll = async function (imgArr) {
+//   const imgs = imgArr.map(async val => {
+//     await createImage(val);
+//   });
+//   console.log(imgs);
+// }; // doesn't work - returns 3 undefined promises because the functions will return a promise and once its fulfilled. Remember the async function always returns a promise and not necessarily returning the fulfilled value that we want and we are doing this 3 times which is why we get 3 promises like that. So we need to use promise.all to get the actual fulfilled values of the promises (since want the loading of the images to be parallel in the background).
+// [SEE THE SOLUTION BELOW FOR CLEAR INFO THIS IS KINDA RANDOM]
+
+// loadAll(['img/img-1.jpg', 'img/img-2.jpg', 'img/img-3.jpg']);
+// const loadAll = async function () {
+//   await Promise.all([
+//     createImage('img/img-1.jpg'),
+//     createImage('img/img-2.jpg'),
+//     createImage('img/img-3.jpg'),
+//   ]);
+//   imgs.map(img => {
+//     img.classList.add('parallel');
+//   });
+// };
+
+// what i kinda did
+// const loadAll = async function (imgArr) {
+//   try {
+//     await Promise.all([
+//       createImage('img/img-1.jpg'),
+//       createImage('img/img-2.jpg'),
+//       createImage('img/img-3.jpg'),
+//     ]);
+//     imgs.map(img => {
+//       img.classList.add('parallel');
+//     });
+//   } catch (err) {
+//     console.error(err);
+//   }
+// };
+// loadAll();
+
+// what Jonas did
+const loadAll = async function (imgArr) {
   try {
-    await createImage('img/img-1.jpg');
-    console.log('Image 1 loaded!');
-    currentImage = img;
-    await wait(2);
-    currentImage.style.display = 'none';
-    await createImage('img/img-2.jpg');
-    currentImage = img;
-    console.log('Image 2 loaded');
-    await wait(2);
-    currentImage.style.display = 'none';
+    // using a loop to create the image, we could have also called the create image function inside Promise.all like I did above but that doesn't keep the code dry.
+    const imgs = imgArr.map(async img => await createImage(img));
+    console.log(imgs); // here this will print an array of 3 PENDING promises so then we have to wait until we can get the actual values (resolved/rejected) with Promise.all
+    const imgsEl = await Promise.all(imgs); // waiting for the promise to get a resolved value and once we get the values, we will continue with the execution of the code.
+    console.log(imgsEl);
+    imgsEl.map(img => {
+      img.classList.add('parallel');
+    });
   } catch (err) {
-    // we can actually use catch without using the error argument
     console.error(err);
   }
 };
+loadAll(['img/img-1.jpg', 'img/img-2.jpg', 'img/img-3.jpg']);
